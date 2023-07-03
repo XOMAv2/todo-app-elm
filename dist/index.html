@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>TodoMVC</title>
+        <script type="text/javascript" src="./main.js"></script>
+        <link rel="stylesheet" href="./output.css" />
+    </head>
+
+    <body></body>
+
+    <script type="text/javascript">
+        // Define a Custom Element that uses this function. Here we make it
+        // possible to define nodes like this:
+        //
+        //     <date-time locale="en-GB" posix-time="1688064194898" zone-name="Asia/Tbilisi">
+        //
+        customElements.define(
+            "date-time",
+            class extends HTMLElement {
+                // Things required by Custom Elements.
+                constructor() {
+                    super();
+                }
+
+                connectedCallback() {
+                    this.setTextContent();
+                }
+
+                attributeChangedCallback() {
+                    this.setTextContent();
+                }
+
+                static get observedAttributes() {
+                    return ["locale", "posix-time", "zone-name", "offset"];
+                }
+
+                setTextContent() {
+                    const locale = this.getAttribute("locale");
+                    const posixTime = +this.getAttribute("posix-time");
+                    const zoneName = this.getAttribute("zone-name");
+                    const offset = +this.getAttribute("offset");
+
+                    this.textContent = this.calcTextContent(locale, posixTime, zoneName, offset);
+                }
+
+                calcTextContent(locale, posixTime, zoneName, offset) {
+                    let dateTimeString;
+
+                    if (zoneName) {
+                        dateTimeString = new Date(posixTime).toLocaleString(locale, {
+                            timeZone: zoneName,
+                        });
+                    } else {
+                        dateTimeString = new Date(posixTime + offset * 60 * 1000).toLocaleString(
+                            locale,
+                            { timeZone: "UTC" }
+                        );
+                    }
+
+                    return dateTimeString;
+                }
+            }
+        );
+
+        customElements.define(
+            "relative-date-time",
+            class extends HTMLElement {
+                // Things required by Custom Elements.
+                constructor() {
+                    super();
+                }
+
+                connectedCallback() {
+                    this.setTextContent();
+                }
+
+                attributeChangedCallback() {
+                    this.setTextContent();
+                }
+
+                static get observedAttributes() {
+                    return [
+                        "locale",
+                        "year",
+                        "quarter",
+                        "month",
+                        "week",
+                        "day",
+                        "hour",
+                        "minute",
+                        "second",
+                    ];
+                }
+
+                setTextContent() {
+                    const locale = this.getAttribute("locale");
+
+                    const year = +this.getAttribute("year");
+                    const quarter = +this.getAttribute("quarter");
+                    const month = +this.getAttribute("month");
+                    const week = +this.getAttribute("week");
+                    const day = +this.getAttribute("day");
+                    const hour = +this.getAttribute("hour");
+                    const minute = +this.getAttribute("minute");
+                    const second = +this.getAttribute("second");
+
+                    this.textContent = this.calcTextContent(
+                        locale,
+                        year,
+                        quarter,
+                        month,
+                        week,
+                        day,
+                        hour,
+                        minute,
+                        second
+                    );
+                }
+
+                calcTextContent(locale, year, quarter, month, week, day, hour, minute, second) {
+                    let relativeString;
+                    const rtf = new Intl.RelativeTimeFormat(locale, {});
+
+                    if (year) {
+                        relativeString = rtf.format(year, "year");
+                    } else if (quarter) {
+                        relativeString = rtf.format(quarter, "quarter");
+                    } else if (month) {
+                        relativeString = rtf.format(month, "month");
+                    } else if (week) {
+                        relativeString = rtf.format(week, "week");
+                    } else if (day) {
+                        relativeString = rtf.format(day, "day");
+                    } else if (hour) {
+                        relativeString = rtf.format(hour, "hour");
+                    } else if (minute) {
+                        relativeString = rtf.format(minute, "minute");
+                    } else if (second) {
+                        relativeString = rtf.format(second, "second");
+                    } else {
+                        relativeString = "";
+                    }
+
+                    return relativeString;
+                }
+            }
+        );
+
+        const localStorageKey = "app-model";
+        const storedState = localStorage.getItem(localStorageKey);
+        const startingState = storedState ? JSON.parse(storedState) : null;
+
+        const app = Elm.Main.init({ flags: startingState });
+
+        app.ports.setStorage.subscribe(function (state) {
+            localStorage.setItem(localStorageKey, JSON.stringify(state));
+        });
+    </script>
+</html>
